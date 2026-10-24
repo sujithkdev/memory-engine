@@ -1,36 +1,380 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Memory — Personal chat</title><link rel="stylesheet" href="/style.css"></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Studio — Cognitive Long-Term Memory for Local AI</title>
+  <meta name="description" content="Fast, local-first long-term memory for local LLMs with cognitive decay, pgvector retrieval, and OpenAI drop-in proxy.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/personal.css">
+</head>
 <body>
-<aside class="sidebar" id="sidebar" aria-label="Chat history">
-<div class="sidebar-heading"><a class="brand" href="/">memory<span>·</span></a><button id="close-sidebar" class="icon-button" aria-label="Close sidebar">☰</button></div>
-<button class="new-chat" id="new-chat"><span>＋</span> New chat</button>
-<div class="side-label">Your chats</div><div id="conversations" class="conversation-list"><p class="muted small">No conversations yet</p></div>
-<button class="settings-button" id="settings"><span class="avatar">Y</span><span>Settings</span><span class="settings-gear">⚙</span></button>
-</aside>
-<button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="Close navigation" hidden></button>
-<main>
-<header>
-<button class="icon-button" id="menu" aria-label="Toggle sidebar" aria-expanded="true">☰</button>
-<div class="model-picker"><select id="model" aria-label="Ollama model" hidden><option value="">Choose a model</option></select><button id="model-trigger" class="model-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options"><span class="llama-icon" aria-hidden="true"></span><span id="model-label">Choose a model</span><span class="picker-search-icon" aria-hidden="true">⌄</span></button><div id="model-popover" class="model-popover" hidden><label class="model-search-label"><span>⌕</span><input id="model-search" placeholder="Search models" aria-label="Search models" autocomplete="off"></label><div id="model-options" role="listbox" aria-label="Installed Ollama models"></div><div class="picker-footer">Ollama<button id="refresh-models" type="button">Refresh</button></div></div></div>
-<span id="page-title" class="sr-only">New chat</span><button id="header-new-chat" class="icon-button" aria-label="Start a new chat">＋</button>
-</header>
-<section class="chat-column" aria-label="Chat">
-<div id="messages" class="messages"><div id="welcome" class="welcome"><h1>What can I help with?</h1></div></div>
-<div class="composer-area"><div class="notice-wrap"><div id="notice" class="notice" role="status" hidden></div><button id="setup-shortcut" class="text-button" hidden>Open settings</button></div><form id="chat-form" class="composer"><textarea id="prompt" rows="1" maxlength="12000" placeholder="Ask anything" aria-label="Message" required></textarea><div class="composer-actions"><button id="stop" type="button" class="stop-button" hidden>Stop</button><button class="send-button" id="send" aria-label="Send message">↑</button></div></form><div class="composer-note">AI can make mistakes. Check important information.</div></div>
-</section></main>
-<dialog id="settings-dialog"><form id="settings-form">
-<div class="dialog-heading"><h2>Settings</h2><button type="button" class="icon-button close-dialog" aria-label="Close">×</button></div>
-<div class="setting-row"><div><strong>Use memory</strong><small>Recall details from previous chats.</small></div><input id="use-memory" type="checkbox" role="switch" aria-label="Use memory" checked></div>
-<div class="setting-row"><div><strong>Remember personal facts</strong><small>Save useful details from your messages.</small></div><input id="auto-remember" type="checkbox" role="switch" aria-label="Remember personal facts" checked></div>
-<button id="library-nav" type="button" class="manage-button">Manage memories <span>›</span></button>
-<details id="connection-details"><summary>Profile & connection <span class="status-pill" id="connection-state">Checking…</span></summary>
-<div id="service-details" class="service-details"></div><div id="retrieval-mode" class="small muted"></div>
-<label>Profile<select id="profile-select"><option value="">Create a new profile</option></select></label><label id="name-label">New profile name<input id="profile-name" maxlength="50" placeholder="Your name" pattern="[A-Za-z0-9_-]{3,50}"><small>3–50 letters, numbers, underscores or hyphens.</small></label>
-<label>Workspace<select id="namespace"><option>DEFAULT</option><option>WORK</option><option>CODING</option><option>PERSONAL</option><option>LEARNING</option></select></label>
-<div class="dialog-actions"><button type="button" id="refresh" class="outline-button">Refresh</button><button class="primary-button" id="save-settings">Save profile</button></div>
-</details><p class="form-error" id="settings-error" role="alert"></p></form></dialog>
-<dialog id="memory-dialog"><form id="memory-form"><div class="dialog-heading"><h2>Add a memory</h2><button type="button" class="icon-button close-dialog" aria-label="Close">×</button></div><label>What should I remember?<textarea id="memory-content" rows="4" maxlength="10000" placeholder="I prefer concise answers with examples." required></textarea></label><div class="form-row"><label>Type<select id="memory-type"><option value="FACT">Fact</option><option value="PREFERENCE">Preference</option><option value="GOAL">Goal</option><option value="PROJECT">Project</option><option value="KNOWLEDGE">Knowledge</option></select></label><label>Importance<select id="importance"><option value="0.6">Normal</option><option value="0.9">High</option><option value="0.3">Low</option></select></label></div><div class="dialog-actions"><button class="primary-button" id="save-memory">Save memory</button></div><p class="form-error" id="memory-error" role="alert"></p></form></dialog>
-<dialog id="library-dialog" class="wide-dialog"><div class="dialog-heading"><h2>Saved memories</h2><button class="icon-button close-dialog" aria-label="Close">×</button></div><p class="muted">Review or remove what your assistant remembers.</p><div class="library-toolbar"><label>Show<select id="library-status"><option value="ACTIVE">Recent memories</option><option value="STALE">Older memories</option></select></label><button class="outline-button" id="add-memory">＋ Add memory</button></div><div id="library-list"></div><button id="more-memories" class="outline-button" hidden>Load more</button></dialog>
-<dialog id="map-dialog" class="wide-dialog"><div class="dialog-heading"><h2>Memories for this reply</h2><button class="icon-button close-dialog" aria-label="Close">×</button></div><p class="muted">Context shared with the model for this answer.</p><div id="map-content"></div></dialog>
-<script src="/app.js" type="module"></script></body></html>
+  <!-- Ambient Backdrop Glow -->
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
 
+  <!-- Left Sidebar (Conversations & Profiles) -->
+  <aside class="sidebar" id="sidebar" aria-label="Chat history">
+    <div class="sidebar-heading">
+      <a class="brand" href="/">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a4 4 0 0 0-4 4v1H7a4 4 0 0 0-4 4v1a4 4 0 0 0 4 4h1v1a4 4 0 0 0 4 4 4 4 0 0 0 4-4v-1h1a4 4 0 0 0 4-4v-1a4 4 0 0 0-4-4h-1V6a4 4 0 0 0-4-4Z"/>
+            <path d="M12 6v12"/>
+            <path d="M8 10h8"/>
+            <path d="M8 14h8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">memory<span>·</span>studio</span>
+          <span class="brand-sub">cognitive rag</span>
+        </div>
+      </a>
+      <button id="close-sidebar" class="icon-button" aria-label="Close sidebar" title="Close sidebar">✕</button>
+    </div>
+
+    <button class="new-chat" id="new-chat" title="Start a new chat (Ctrl+K)">
+      <span class="plus-icon">＋</span>
+      <span>New chat</span>
+      <kbd>Ctrl+K</kbd>
+    </button>
+
+    <div class="sidebar-nav">
+      <button class="nav-item selected" id="chat-nav" type="button">
+        <span class="nav-icon">💬</span>
+        <span>Chats</span>
+        <span class="nav-count" id="chat-count">0</span>
+      </button>
+    </div>
+
+    <div class="side-label">YOUR CONVERSATIONS</div>
+    <div id="conversations" class="conversation-list" role="navigation">
+      <p class="muted small">No conversations yet</p>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="settings-button" id="settings" title="Profile & connection settings">
+        <div class="avatar-wrapper">
+          <span class="avatar">Y</span>
+          <span class="status-dot-mini" id="sidebar-status-dot"></span>
+        </div>
+        <div class="settings-user-info">
+          <span class="settings-user-name">Personal Profile</span>
+          <span class="settings-user-status">Local Engine</span>
+        </div>
+        <span class="settings-gear">⚙</span>
+      </button>
+    </div>
+  </aside>
+
+  <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="Close navigation" hidden></button>
+
+  <!-- Main View Area -->
+  <main>
+    <header class="app-header">
+      <div class="header-left">
+        <button class="icon-button mobile-menu" id="menu" aria-label="Toggle sidebar" aria-expanded="true" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="model-picker">
+          <select id="model" aria-label="Ollama model" hidden>
+            <option value="">Choose a model</option>
+          </select>
+          <button id="model-trigger" class="model-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options" title="Select installed Ollama model">
+            <span class="llama-icon" aria-hidden="true"></span>
+            <span id="model-label">Choose a model</span>
+            <span class="picker-search-icon" aria-hidden="true">⌄</span>
+          </button>
+          <div id="model-popover" class="model-popover" hidden>
+            <label class="model-search-label">
+              <span>⌕</span>
+              <input id="model-search" placeholder="Search installed models..." aria-label="Search models" autocomplete="off">
+            </label>
+            <div id="model-options" role="listbox" aria-label="Installed Ollama models"></div>
+            <div class="picker-footer">
+              <span>Ollama Local</span>
+              <button id="refresh-models" type="button">↻ Refresh</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-topic">
+          <span class="topic-dot"></span>
+          <span id="page-title" class="page-title">New conversation</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="connection-badge-pill" id="badge-connection-state" title="Engine & Ollama status">
+          <span class="status-pill" id="connection-state">
+            <i></i> Checking…
+          </span>
+        </div>
+
+        <button id="header-new-chat" class="header-action-btn" aria-label="Start a new chat" title="New Chat (Ctrl+K)">
+          <span>＋</span>
+        </button>
+
+        <button class="panel-toggle-btn" id="toggle-panel" title="Toggle Memory Context Panel" aria-label="Toggle Memory Panel">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="15" y1="3" x2="15" y2="21"></line>
+          </svg>
+          <span>Memory</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <!-- Chat Stage -->
+      <section class="chat-column" aria-label="Chat">
+        <div id="messages" class="messages">
+          <div id="welcome" class="welcome">
+            <div class="welcome-badge">
+              <span class="sparkle">✨</span>
+              <span>Cognitive Memory Architecture</span>
+            </div>
+            <h1>What should we remember<br><span>and explore today?</span></h1>
+            <p>Your local Ollama models never forget. Conversations automatically retrieve durable personal facts, technical preferences, and project context via pgvector.</p>
+            
+            <div class="suggestions">
+              <button type="button" class="suggestion-card" data-prompt="What do you know about my tech stack and personal preferences?">
+                <span class="card-icon">🧠</span>
+                <div class="card-text">
+                  <strong>Recall Preferences</strong>
+                  <small>"What do you know about my tech stack and preferences?"</small>
+                </div>
+              </button>
+              <button type="button" class="suggestion-card" data-prompt="Remember that I prefer Go, PostgreSQL with pgvector, and Vanilla CSS without Tailwind.">
+                <span class="card-icon">📌</span>
+                <div class="card-text">
+                  <strong>Save Memory</strong>
+                  <small>"Remember that I prefer Go, pgvector, and Vanilla CSS."</small>
+                </div>
+              </button>
+              <button type="button" class="suggestion-card" data-prompt="How does Memory Engine's cognitive salience decay and scoring work?">
+                <span class="card-icon">⚡</span>
+                <div class="card-text">
+                  <strong>Explain Engine</strong>
+                  <small>"How does cognitive salience decay and scoring work?"</small>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer Floating Dock -->
+        <div class="composer-area">
+          <div class="notice-wrap">
+            <div id="notice" class="notice" role="status" hidden></div>
+            <button id="setup-shortcut" class="text-button" hidden>Open settings</button>
+          </div>
+
+          <form id="chat-form" class="composer">
+            <textarea id="prompt" rows="1" maxlength="12000" placeholder="Ask anything, or teach a new preference or fact..." aria-label="Message" required></textarea>
+            
+            <div class="composer-bottom">
+              <div class="memory-controls">
+                <label class="memory-toggle" title="Recall past facts & preferences for this reply">
+                  <input id="use-memory" type="checkbox" role="switch" checked>
+                  <span>Memory Recall</span>
+                </label>
+                <label class="memory-toggle" title="Extract and persist new personal facts from user message">
+                  <input id="auto-remember" type="checkbox" role="switch" checked>
+                  <span>Auto-Save Facts</span>
+                </label>
+              </div>
+
+              <div class="composer-actions">
+                <span class="enter-hint">Press ↵ to send · Shift+↵ for newline</span>
+                <button id="stop" type="button" class="stop-button" hidden>Stop</button>
+                <button class="send-button" id="send" aria-label="Send message" title="Send message">↑</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="composer-note">
+            <span>Local &amp; Private · Memory Engine (Go) + pgvector + Ollama · OpenAI Drop-In at <code>/v1</code></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Side Memory Context Panel -->
+      <aside class="memory-panel" id="memory-panel" aria-label="Retrieved memory context">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-text">
+              <span class="panel-icon">🧠</span>
+              <h3>Memory Context</h3>
+            </div>
+            <span class="tiny-tag" id="context-count">0</span>
+          </div>
+          <p class="panel-description">Durable facts, preferences, and project context injected into prompt</p>
+        </div>
+
+        <div class="context-state">
+          <span class="pulse-ring">◉</span>
+          <div class="context-status-text">
+            <strong id="context-status">Ready when you are</strong>
+          </div>
+        </div>
+
+        <div class="panel-section-heading">
+          <span>ACTIVE MEMORIES</span>
+          <button id="memory-map" class="map-button" type="button" title="View transparent memory-to-reply citation graph">◈ Trace Map</button>
+        </div>
+
+        <div id="context-list">
+          <div class="empty-context">
+            <span class="empty-icon">📂</span>
+            <p>Relevant memories will appear here when you send a message.</p>
+            <small>Memories are ranked by relevance, salience decay, and importance.</small>
+          </div>
+        </div>
+
+        <div class="panel-footer">
+          <button type="button" class="outline-button" id="add-memory">＋ Add memory</button>
+          <button type="button" class="outline-button" id="library-nav">📚 Saved memories</button>
+          <div class="mode-note" id="retrieval-mode">Hybrid retrieval active</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Settings & Profile Dialog -->
+  <dialog id="settings-dialog">
+    <form id="settings-form">
+      <div class="dialog-heading">
+        <h2>Settings &amp; Connection</h2>
+        <button type="button" class="icon-button close-dialog" aria-label="Close">✕</button>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <strong>Use memory</strong>
+          <small>Recall saved details and preferences from previous chats.</small>
+        </div>
+        <input id="use-memory-dialog" type="checkbox" role="switch" checked style="display: none;">
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <strong>Remember personal facts</strong>
+          <small>Automatically extract durable details from your messages.</small>
+        </div>
+        <input id="auto-remember-dialog" type="checkbox" role="switch" checked style="display: none;">
+      </div>
+
+      <details id="connection-details" open>
+        <summary>Profile &amp; Workspace</summary>
+        <div id="service-details" class="service-details"></div>
+
+        <label>Select Profile
+          <select id="profile-select">
+            <option value="">Create a new profile</option>
+          </select>
+        </label>
+        
+        <label id="name-label">New profile name
+          <input id="profile-name" maxlength="50" placeholder="e.g. Sujith" pattern="[A-Za-z0-9_-]{3,50}">
+          <small>3–50 letters, numbers, underscores or hyphens.</small>
+        </label>
+
+        <label>Active Workspace
+          <select id="namespace">
+            <option>DEFAULT</option>
+            <option>WORK</option>
+            <option>CODING</option>
+            <option>PERSONAL</option>
+            <option>LEARNING</option>
+          </select>
+        </label>
+
+        <div class="dialog-actions">
+          <button type="button" id="refresh" class="outline-button">↻ Refresh Services</button>
+          <button class="primary-button" id="save-settings">Save Profile</button>
+        </div>
+      </details>
+      <p class="form-error" id="settings-error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <!-- Add Memory Dialog -->
+  <dialog id="memory-dialog">
+    <form id="memory-form">
+      <div class="dialog-heading">
+        <h2>Add a Memory</h2>
+        <button type="button" class="icon-button close-dialog" aria-label="Close">✕</button>
+      </div>
+      <label>What should Memory Engine remember?
+        <textarea id="memory-content" rows="4" maxlength="10000" placeholder="e.g. I prefer concise answers with code examples in Go and strict TypeScript." required></textarea>
+      </label>
+      <div class="form-row">
+        <label>Memory Type
+          <select id="memory-type">
+            <option value="FACT">Fact</option>
+            <option value="PREFERENCE">Preference</option>
+            <option value="GOAL">Goal</option>
+            <option value="PROJECT">Project</option>
+            <option value="INSTRUCTION">Instruction</option>
+            <option value="SKILL">Skill</option>
+            <option value="KNOWLEDGE">Knowledge</option>
+          </select>
+        </label>
+        <label>Importance Level
+          <select id="importance">
+            <option value="0.9">High (0.9)</option>
+            <option value="0.6" selected>Normal (0.6)</option>
+            <option value="0.3">Low (0.3)</option>
+          </select>
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="outline-button close-dialog">Cancel</button>
+        <button class="primary-button" id="save-memory">Save Memory</button>
+      </div>
+      <p class="form-error" id="memory-error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <!-- Saved Memories Library Dialog -->
+  <dialog id="library-dialog" class="wide-dialog">
+    <div class="dialog-heading">
+      <h2>Saved memories</h2>
+      <button class="icon-button close-dialog" aria-label="Close">✕</button>
+    </div>
+    <p class="muted">Review, search, or forget what your assistant remembers across all chats.</p>
+    <div class="library-toolbar">
+      <label>Filter:
+        <select id="library-status">
+          <option value="ACTIVE">Recent memories (Active)</option>
+          <option value="STALE">Older memories (Stale / Decayed)</option>
+        </select>
+      </label>
+      <button class="outline-button" id="add-memory-lib" onclick="$('memory-dialog').showModal()">＋ Add memory</button>
+    </div>
+    <div id="library-list" class="library-cards-list"></div>
+    <button id="more-memories" class="outline-button" hidden>Load more</button>
+  </dialog>
+
+  <!-- Memory Trace Map Dialog -->
+  <dialog id="map-dialog" class="wide-dialog">
+    <div class="dialog-heading">
+      <h2>Memories for this reply</h2>
+      <button class="icon-button close-dialog" aria-label="Close">✕</button>
+    </div>
+    <p class="muted">Context shared with the model for this answer.</p>
+    <div id="map-content"></div>
+  </dialog>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
