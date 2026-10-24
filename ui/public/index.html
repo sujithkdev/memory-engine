@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Memory — Personal chat</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<aside class="sidebar" id="sidebar" aria-label="Chat history">
+<div class="sidebar-heading"><a class="brand" href="/">memory<span>·</span></a><button id="close-sidebar" class="icon-button" aria-label="Close sidebar">☰</button></div>
+<button class="new-chat" id="new-chat"><span>＋</span> New chat</button>
+<div class="side-label">Your chats</div><div id="conversations" class="conversation-list"><p class="muted small">No conversations yet</p></div>
+<button class="settings-button" id="settings"><span class="avatar">Y</span><span>Settings</span><span class="settings-gear">⚙</span></button>
+</aside>
+<button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="Close navigation" hidden></button>
+<main>
+<header>
+<button class="icon-button" id="menu" aria-label="Toggle sidebar" aria-expanded="true">☰</button>
+<div class="model-picker"><select id="model" aria-label="Ollama model" hidden><option value="">Choose a model</option></select><button id="model-trigger" class="model-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options"><span class="llama-icon" aria-hidden="true"></span><span id="model-label">Choose a model</span><span class="picker-search-icon" aria-hidden="true">⌄</span></button><div id="model-popover" class="model-popover" hidden><label class="model-search-label"><span>⌕</span><input id="model-search" placeholder="Search models" aria-label="Search models" autocomplete="off"></label><div id="model-options" role="listbox" aria-label="Installed Ollama models"></div><div class="picker-footer">Ollama<button id="refresh-models" type="button">Refresh</button></div></div></div>
+<span id="page-title" class="sr-only">New chat</span><button id="header-new-chat" class="icon-button" aria-label="Start a new chat">＋</button>
+</header>
+<section class="chat-column" aria-label="Chat">
+<div id="messages" class="messages"><div id="welcome" class="welcome"><h1>What can I help with?</h1></div></div>
+<div class="composer-area"><div class="notice-wrap"><div id="notice" class="notice" role="status" hidden></div><button id="setup-shortcut" class="text-button" hidden>Open settings</button></div><form id="chat-form" class="composer"><textarea id="prompt" rows="1" maxlength="12000" placeholder="Ask anything" aria-label="Message" required></textarea><div class="composer-actions"><button id="stop" type="button" class="stop-button" hidden>Stop</button><button class="send-button" id="send" aria-label="Send message">↑</button></div></form><div class="composer-note">AI can make mistakes. Check important information.</div></div>
+</section></main>
+<dialog id="settings-dialog"><form id="settings-form">
+<div class="dialog-heading"><h2>Settings</h2><button type="button" class="icon-button close-dialog" aria-label="Close">×</button></div>
+<div class="setting-row"><div><strong>Use memory</strong><small>Recall details from previous chats.</small></div><input id="use-memory" type="checkbox" role="switch" aria-label="Use memory" checked></div>
+<div class="setting-row"><div><strong>Remember personal facts</strong><small>Save useful details from your messages.</small></div><input id="auto-remember" type="checkbox" role="switch" aria-label="Remember personal facts" checked></div>
+<button id="library-nav" type="button" class="manage-button">Manage memories <span>›</span></button>
+<details id="connection-details"><summary>Profile & connection <span class="status-pill" id="connection-state">Checking…</span></summary>
+<div id="service-details" class="service-details"></div><div id="retrieval-mode" class="small muted"></div>
+<label>Profile<select id="profile-select"><option value="">Create a new profile</option></select></label><label id="name-label">New profile name<input id="profile-name" maxlength="50" placeholder="Your name" pattern="[A-Za-z0-9_-]{3,50}"><small>3–50 letters, numbers, underscores or hyphens.</small></label>
+<label>Workspace<select id="namespace"><option>DEFAULT</option><option>WORK</option><option>CODING</option><option>PERSONAL</option><option>LEARNING</option></select></label>
+<div class="dialog-actions"><button type="button" id="refresh" class="outline-button">Refresh</button><button class="primary-button" id="save-settings">Save profile</button></div>
+</details><p class="form-error" id="settings-error" role="alert"></p></form></dialog>
+<dialog id="memory-dialog"><form id="memory-form"><div class="dialog-heading"><h2>Add a memory</h2><button type="button" class="icon-button close-dialog" aria-label="Close">×</button></div><label>What should I remember?<textarea id="memory-content" rows="4" maxlength="10000" placeholder="I prefer concise answers with examples." required></textarea></label><div class="form-row"><label>Type<select id="memory-type"><option value="FACT">Fact</option><option value="PREFERENCE">Preference</option><option value="GOAL">Goal</option><option value="PROJECT">Project</option><option value="KNOWLEDGE">Knowledge</option></select></label><label>Importance<select id="importance"><option value="0.6">Normal</option><option value="0.9">High</option><option value="0.3">Low</option></select></label></div><div class="dialog-actions"><button class="primary-button" id="save-memory">Save memory</button></div><p class="form-error" id="memory-error" role="alert"></p></form></dialog>
+<dialog id="library-dialog" class="wide-dialog"><div class="dialog-heading"><h2>Saved memories</h2><button class="icon-button close-dialog" aria-label="Close">×</button></div><p class="muted">Review or remove what your assistant remembers.</p><div class="library-toolbar"><label>Show<select id="library-status"><option value="ACTIVE">Recent memories</option><option value="STALE">Older memories</option></select></label><button class="outline-button" id="add-memory">＋ Add memory</button></div><div id="library-list"></div><button id="more-memories" class="outline-button" hidden>Load more</button></dialog>
+<dialog id="map-dialog" class="wide-dialog"><div class="dialog-heading"><h2>Memories for this reply</h2><button class="icon-button close-dialog" aria-label="Close">×</button></div><p class="muted">Context shared with the model for this answer.</p><div id="map-content"></div></dialog>
+<script src="/app.js" type="module"></script></body></html>
+

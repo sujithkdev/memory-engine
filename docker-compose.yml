@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL 17 ──────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg17   # pgvector pre-installed — ready for Phase 4
+    container_name: memory-engine-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       memory_engine
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d memory_engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Test database (isolated schema for tests) ──────────────────────────────
+  postgres-test:
+    image: pgvector/pgvector:pg17
+    container_name: memory-engine-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       memory_engine_test
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data   # in-memory for fast test runs
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d memory_engine_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local

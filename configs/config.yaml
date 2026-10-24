@@ -1,0 +1,98 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+  shutdown_timeout: 10s
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "memory_engine"
+  user: "postgres"
+  password: "postgres"
+  ssl_mode: "disable"
+  max_conns: 25
+  min_conns: 5
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+  health_check_period: 1m
+
+migrations:
+  path: "migrations"
+  table: "schema_migrations"
+
+log:
+  level: "debug"
+  format: "pretty"   # pretty | json
+
+app:
+  name: "memory-engine"
+  version: "1.0.0"
+  environment: "development"  # development | staging | production
+
+# ── Scoring weights ────────────────────────────────────────────────────────────
+# Controls how memories are ranked during retrieval.
+# All weights must sum to 1.0.
+# Adjust without redeployment by changing this file and restarting.
+scoring:
+  weights:
+    relevance:        0.40   # semantic similarity to the query
+    importance:       0.20   # how important the memory was marked
+    confidence:       0.15   # how confident the system is in the memory
+    salience:         0.10   # current salience after decay
+    recency:          0.10   # how recently the memory was created/accessed
+    access_frequency: 0.05   # how often this memory has been accessed
+
+  # Salience decay parameters (exponential decay: s = s0 * e^(-λ * days))
+  decay:
+    # λ (lambda) — higher = faster decay. Default: half-life ≈ 30 days.
+    lambda: 0.023
+    # Minimum salience floor — memories never fully disappear due to decay alone.
+    floor: 0.05
+    # How often the background worker runs decay (Phase 9).
+    interval: 24h
+
+  # Initial salience assigned to new memories by type.
+  initial_salience:
+    WORKING:      0.9    # high initial salience, decays fastest
+    FACT:         0.6
+    PREFERENCE:   0.7
+    PROJECT:      0.65
+    GOAL:         0.75
+    INSTRUCTION:  0.85
+    SKILL:        0.6
+    EXPERIENCE:   0.55
+    DECISION:     0.65
+    KNOWLEDGE:    0.5
+    RELATIONSHIP: 0.6
+
+# ── Embeddings ─────────────────────────────────────────────────────────────────
+# provider: "ollama" for local Ollama, "null" for testing/no-embedding mode
+embeddings:
+  provider:   "null"           # switch to "ollama" when Ollama is running
+  ollama_url: "http://localhost:11434"
+  model:      "nomic-embed-text"
+  version:    "v1.5"
+  dimensions: 768              # nomic-embed-text=768, qwen3-embedding=1024
+
+# ── Background Workers ─────────────────────────────────────────────────────────
+workers:
+  enabled:              true
+  decay_interval:       24h    # salience decay — runs daily
+  reembed_interval:     1h     # re-embedding queue — runs hourly
+  expiry_interval:      1h     # delete expired memories — runs hourly
+  consolidate_interval: 6h     # promote RAW→EXTRACTED — runs every 6h
+  batch_size:           200    # memories processed per worker run
+
+# ── Cache ──────────────────────────────────────────────────────────────────────
+cache:
+  enabled:          true
+  max_items:        5000       # max entries before LRU eviction
+  cleanup_interval: 5m         # how often expired items are swept
+  user_ttl:         5m
+  memory_ttl:       2m
+  search_ttl:       1m
+  embedding_ttl:    1h
+  retrieval_ttl:    30s
